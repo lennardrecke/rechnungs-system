@@ -15,7 +15,7 @@ const AppLayout = () => {
   return (
     <div className="flex min-h-screen">
       <aside className="w-56 border-r bg-card p-4 flex flex-col">
-        <h1 className="text-lg font-bold mb-6 px-3">{t('auth.loginTitle')}</h1>
+        <h1 className="text-lg font-bold mb-6 px-3">Rechnungen</h1>
         <nav className="flex flex-col gap-1 flex-1">
           <NavLink to="/bills" className={linkClass}>
             <FileText size={18} /> {t('nav.bills')}
