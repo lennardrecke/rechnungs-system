@@ -1,6 +1,7 @@
 import { useLanguage } from '@/i18n/LanguageContext';
 import type { Language } from '@/i18n/translations';
 import { defaultConfig, useConfig } from '@/hooks/useConfig';
+import type { AppConfig, AppConfigKey } from '@/hooks/useConfig';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,7 +12,7 @@ import { useMemo, useState } from 'react';
 const SettingsPage = () => {
   const { t, language, setLanguage } = useLanguage();
   const { config, isLoading, updateConfig } = useConfig();
-  const [draft, setDraft] = useState<Record<string, string>>({});
+  const [draft, setDraft] = useState<Partial<AppConfig>>({});
 
   const baseConfig = useMemo(
     () => ({ ...defaultConfig, ...config, language: config.language || language }),
@@ -19,11 +20,11 @@ const SettingsPage = () => {
   );
   const form = { ...baseConfig, ...draft };
 
-  const set = (key: string, value: string) => setDraft((prev) => ({ ...prev, [key]: value }));
+  const set = (key: AppConfigKey, value: string) => setDraft((prev) => ({ ...prev, [key]: value }));
 
   const handleSave = () => {
-    const updates: Record<string, string> = {};
-    for (const key of Object.keys(form)) {
+    const updates: Partial<AppConfig> = {};
+    for (const key of Object.keys(form) as AppConfigKey[]) {
       if (form[key] !== baseConfig[key]) updates[key] = form[key];
     }
     if (Object.keys(updates).length > 0) {
