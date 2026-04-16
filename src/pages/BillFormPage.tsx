@@ -63,6 +63,8 @@ const newItem = (order: number): LineItem => ({
   printName: "",
 })
 
+const BILL_NUMBER_COUNTER_KEY = "last_bill_number"
+
 const BillFormPage = () => {
   const { t } = useLanguage()
   const { id } = useParams()
@@ -241,13 +243,44 @@ const BillFormPage = () => {
     }
 
     if (isNew) {
+      const { data: lastIssuedRow, error: lastIssuedError } = await supabase
+        .from("app_config")
+        .select("value")
+        .eq("key", BILL_NUMBER_COUNTER_KEY)
+        .maybeSingle()
+      if (lastIssuedError) {
+        toast.error(lastIssuedError.message)
+        return
+      }
+
       const { data: maxBill } = await supabase
         .from("bills")
         .select("bill_number")
         .order("bill_number", { ascending: false })
         .limit(1)
-        .single()
-      const newBillNumber = (maxBill?.bill_number || 0) + 1
+        .maybeSingle()
+
+      const lastIssuedBillNumber = Number.parseInt(lastIssuedRow?.value || "", 10)
+      const latestExistingBillNumber = maxBill?.bill_number || 0
+      const newBillNumber =
+        Math.max(
+          Number.isNaN(lastIssuedBillNumber) ? 0 : lastIssuedBillNumber,
+          latestExistingBillNumber
+        ) + 1
+
+      const { error: counterError } = await supabase
+        .from("app_config")
+        .upsert(
+          {
+            key: BILL_NUMBER_COUNTER_KEY,
+            value: String(newBillNumber),
+          },
+          { onConflict: "key" }
+        )
+      if (counterError) {
+        toast.error(counterError.message)
+        return
+      }
 
       const { data: bill, error } = await supabase
         .from("bills")
@@ -270,6 +303,7 @@ const BillFormPage = () => {
         toast.error(error?.message || "Error")
         return
       }
+      setBillNumber(bill.bill_number)
 
       const billItems = resolvedItems.map((i, idx) => ({
         bill_id: bill.id,
